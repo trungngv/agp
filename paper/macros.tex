@@ -1,0 +1,151 @@
+% genereal purpose macros here
+\newcommand{\marg}{\marginpar}
+\newcommand{\todo}[1]{{\color{red}{TODO: #1}}}
+\newcommand{\commentOut}[1]{} 
+\newcommand{\add}[1]{\textcolor{red}{#1}} % To highligh modified text
+
+% abbreviations
+\newcommand{\etal}{et al.\xspace}
+\newcommand{\ie}{i.e.\xspace}
+\newcommand{\eg}{e.g.\xspace}
+\newcommand{\Ie}{I.e.\xspace}
+
+
+
+% Matrices and vectors 
+\newcommand{\mat}[1]{\mathbf{#1}}
+\renewcommand{\vec}[1]{ \mathbf{#1} } % math bold
+\newcommand{\vecS}[1]{\boldsymbol{ #1 }  } % this for boldsymbols
+\newcommand{\vecentry}[2]{{\mathrm #1_{#2}}}
+\newcommand{\matentry}[3]{{\mathrm #1_{#2,#3}}}
+\newcommand{\matcol}[2]{\mat{#1}_{\cdot #2}}
+\newcommand{\matrow}[2]{\mat{#1}_{#2 \cdot}}
+
+ % Matrices here
+ \newcommand{\A}{\mat{A}}
+\newcommand{\B}{\mat{B}}
+\newcommand{\C}{\mat{C}}
+\newcommand{\D}{\mat{D}}
+\newcommand{\F}{\mat{F}}
+\newcommand{\G}{\mat{G}}
+\newcommand{\I}{\mat{I}}
+\renewcommand{\L}{\mat{L}}
+\newcommand{\X}{\mat{X}}
+\newcommand{\W}{\mat{W}}
+\newcommand{\Y}{\mat{Y}}
+\newcommand{\Z}{\mat{Z}}
+\renewcommand{\S}{\mat{S}}
+\newcommand{\K}{\mat{K}}
+\newcommand{\U}{\mat{U}}
+
+% Vectors here
+\newcommand{\f}{\vec{f}}
+\newcommand{\g}{\vec{g}}
+\newcommand{\h}{\vec{h}}
+\newcommand{\m}{\vec{m}}
+\renewcommand{\t}{\vec{t}}
+\renewcommand{\u}{\vec{u}}
+\renewcommand{\v}{\vec{v}}
+\newcommand{\w}{\vec{w}}
+\newcommand{\x}{\vec{x}}
+\newcommand{\y}{\vec{y}}
+\newcommand{\z}{\vec{z}}
+\newcommand{\s}{\vec{s}}
+
+ % Vectorial greek letters
+  \newcommand{\vecmu}{\vecS{\mu}}
+ \newcommand{\vectheta}{\vecS{\theta}}
+ \newcommand{\vecalpha}{\vecS{\alpha}}
+ \newcommand{\vecphi}{\vecS{\phi}}
+ \newcommand{\veceta}{\vecS{\eta}}
+ \newcommand{\vecepsilon}{\vecS{\epsilon}} 
+ 
+% caligraphic alphabet
+\newcommand{\calA}{\mathcal{A}}
+\newcommand{\calC}{\mathcal{C}}
+\newcommand{\calD}{\mathcal{D}} 
+\newcommand{\calL}{\mathcal{L}}
+\newcommand{\calM}{\mathcal{M}}
+\newcommand{\calT}{\mathcal{T}}
+\newcommand{\calU}{\mathcal{U}}
+\newcommand{\calX}{\mathcal{X}}
+\newcommand{\calF}{\mathcal{F}}
+\newcommand{\calE}{\mathcal{E}}
+\newcommand{\calH}{\mathcal{H}}
+\newcommand{\calI}{\mathcal{I}}
+\newcommand{\calS}{\mathcal{S}}
+\newcommand{\calY}{\mathcal{Y}}
+\newcommand{\calO}{\mathcal{O}}
+\newcommand{\calQ}{\mathcal{Q}}
+\newcommand{\calR}{\mathcal{R}}
+\newcommand{\calV}{\mathcal{V}}
+
+
+% blackboard alphabet 
+\newcommand{\setR}{\mathbb{R}}
+\newcommand{\setE}{\mathbb{E}}
+\newcommand{\setV}{\mathbb{V}}
+\newcommand{\setI}{\mathbb{I}}
+\newcommand{\setX}{\mathbb{X}}
+\newcommand{\setT}{\mathbb{T}}
+
+
+
+% Useful math operators
+\newcommand{\Sum}{{\displaystyle \sum}}
+\DeclareMathOperator{\vect}{vec}
+\DeclareMathOperator{\diag}{diag}
+\DeclareMathOperator*{\argmax}{argmax}                 
+\DeclareMathOperator*{\argmin}{argmin}                 
+\providecommand{\abs}[1]{\lvert#1\rvert}
+\providecommand{\norm}[1]{\lVert#1\rVert}
+\newcommand{\notp}[1]{\stackrel{\neg}{#1}} % symbol for not present
+
+
+% matrix products
+\newcommand{\kron}{\otimes}
+\newcommand{\hada}{\bullet}
+
+% statistics
+\newcommand{\expectation}{\mathbb{E}}
+\newcommand{\Eb}[1]{\left\langle #1 \right\rangle} % Expectation in angle brackets
+\newcommand{\variance}{\mathbb{V}}
+\newcommand{\Normal}{\mathcal{N}}  
+\newcommand{\avg}[1]{\overline{#1}}
+\newcommand{\KL}{\text{KL}}
+
+% GP things
+\newcommand{\GP}{\mathcal{GP}}
+\newcommand{\kernel}{\kappa}
+
+% Other maths
+\newcommand{\deriv}[2]{\frac{\partial{#1}}{\partial{#2}}}
+\newcommand{\trace}{\mbox{ \rm tr }}
+\renewcommand{\det}[1]{\lvert#1\rvert}
+\newcommand{\defeq}{\stackrel{\text{\tiny def}}{=}}
+\newcommand{\idx}{\mathcal{I}}
+\newcommand{\T}{\text{T}}
+\newcommand{\mth}{\mathrm{th}} 
+
+
+\newcommand{\bigO}{\calO}
+\newcommand{\define}{\overset{\Delta}{=}}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

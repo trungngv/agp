@@ -1,0 +1,227 @@
+% Sample LaTeX file for creating a paper in the Morgan Kaufmannn two
+% column, 8 1/2 by 11 inch proceedings format.
+\documentclass{article} % For LaTeX2e
+\usepackage{nips14submit_e,times}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{amsmath,amsthm}
+\usepackage{graphicx}
+\usepackage{bm}
+\usepackage{hyperref}
+\usepackage{natbib}
+\usepackage{fancyhdr}
+\usepackage{latexsym,amsbsy,amssymb,color,xspace,booktabs}
+
+\include{macros}
+\include{local_macros}
+
+\title{Automated Variational Inference for \\ Gaussian Process Models \\ \textsl{Supplementary Material}}
+
+\author{
+Trung V. Nguyen \\
+ANU \& NICTA\\
+%Canberra 2601, Australia \\
+\texttt{VanTrung.Nguyen@nicta.com.au} \\
+\And
+Edwin V. Bonilla \\
+The University of New South Wales \\
+%Sydney,  \\
+\texttt{e.bonilla@unsw.edu.au} \\
+}
+
+% The \author macro works with any number of authors. There are two commands
+% used to separate the names and addresses of multiple authors: \And and \AND.
+%
+% Using \And between authors leaves it to \LaTeX{} to determine where to break
+% the lines. Using \AND forces a linebreak at that point. So, if \LaTeX{}
+% puts 3 of 4 authors names on the first line, and the last on the second
+% line, try using \AND instead of \And before the third author name.
+
+\newcommand{\fix}{\marginpar{FIX}}
+\newcommand{\new}{\marginpar{NEW}}
+
+\nipsfinalcopy % Uncomment for camera-ready version
+
+\begin{document}
+\maketitle
+
+\section{Proof of theorem 1}
+As discussed in the paper, the proof of theorem 1 directly follows from equation (7) and (8) in the main text whose detailed derivations follow.
+\newcommand{\lamk}{\llambda_{k}}
+\newcommand{\lamkn}{\llambda_{k(n)}}
+\newcommand{\lamki}{\llambda_{k(i)}}
+\newcommand{\efi}{\f_{(i)}}
+\newcommand{\gradkn}{\nabla_{\lamkn} \log q_{k(n)} (\fn | \lamkn)}
+\begin{align}
+\expectation_{q_k} [\log p(\y | \f )]
+&= \int q_k(\f | \lamk) \log p(\y | \f) \der \f \\
+&= \sum_{n=1}^N \int q_k(\f | \lamk)  \log p(\y_n | \fn) \der \f \\
+&= \sum_{n=1}^N \int q_{k(n)}(\fn | \lamkn)  \log p(\y_n | \fn) \der \fn, \\
+&= \sum_{n=1}^N \expectation_{q_{k(n)}} \log p(\y_n | \fn)
+\label{eq:expectedllh}
+\end{align}
+where the last equality is an application of the following identity,
+\begin{align}
+\int p(\x, \z) h(\x) \der \x \der \z = \int h(\x) p(\x) \int p(\z | \x) \der \z \der \x = \int p(\x) h(\x) \der \x
+\end{align}
+for any joint distribution $p(\x, \z)$ and arbitrary function $h(\x)$.
+
+The gradients corresponding to $\fn$ are thus given by
+\begin{align}
+\nabla_{\lamkn} & \expectation_{q_k} \log p(\y | \f )
+%=  \nabla_{\lamkn} \int q_k(\f | \lamk) \log p(\y | \f) \der \f \\
+%=& \sum_{i=1}^N \nabla_{\lamkn} \int q_k(\f | \lamk)  \log p(\y_i | \efi) \der %\f \\
+%=& \sum_{i=1}^N \nabla_{\lamkn} \int q_{k(i)}(\efi | \lamki)  \log p(\y_i | \efi) %\der \efi \\
+= \nabla_{\lamkn} \int q_{k(n)}(\fn | \lamkn)  \log p(\y_n | \fn) \der \fn \\
+=&  \int \nabla_{\lamkn} q_{k(n)}(\fn | \lamkn)  \log p(\y_n | \fn) \der \fn \\
+=& \int q_{k(n)}(\fn | \lamkn) \gradkn \log p(\y_n | \fn) \der \fn  \\
+\label{eq:gradient}
+=& \expectation_{q_{k(n)}} \gradkn \log p(\y_n | \fn) \\
+\approx& \frac{1}{S} \sum_{s=1}^S \nabla_{\lamkn} \log q_{k(n)} (\fn^s | \lamkn) \log p(\y_n | \fn^s),
+\end{align}
+where $\fn^s \sim q_{k(n)} (\fn | \lamkn)$.
+Here we have used the fact that $\nabla_{\x} f = f \nabla_{\x} \log f$ for any nonnegative function $f(\x)$.
+
+\section{Proof of theorem 2}
+Since this proof is for the case of mixture with $K = 1$, we simply denote the posterior mean and variance as $\m$ and $\S$, respectively.
+From the expression of the ELBO,
+\newcommand{\ELBO}{\calL(\m, \S)}
+\begin{align}
+\ELBO
+ = \expectation_q [ - \log q(\f | \llambda)] 
++ \expectation_q  [\log p(\f)]
++ \expectation_q  [\log p(\y | \f)],
+\end{align}
+the gradients in \eqref{eq:crossgradient}, \eqref{eq:entgradient}, and equation \eqref{eq:expectedllh} we obtain the gradients of the ELBO w.r.t $\S$:
+\begin{align}
+\nabla_{\S} \ELBO =
+ \sum_{n=1}^N \nabla_{\S} \expectation_{q_{(n)}} \log p(\y_n | \fn)
+ + \frac{1}{2} \S^{-1}  - \frac{1}{2} \K^{-1}.
+\end{align}
+Using the fact that $\S$ is a block diagonal covariance matrices and $q_{(n)}$ is a Gaussian with diagonal covariance we can take the gradients w.r.t $\S_j$, the covariances corresponding to the latent functions, which leads to
+\begin{align}
+\nabla_{\S_j} \ELBO =
+ \sum_{n=1}^N \nabla_{\S_j} \expectation_{q_{j(n)}} \log p(\y_n | \fn)
+ + \frac{1}{2} \S_j^{-1}  - \frac{1}{2} \K_j^{-1},
+\end{align}
+where $q_{j(n)}$ is the marginal posterior corresponding to the latent function $j$ and data point $n$.
+It is easy to see that the gradients of the likelihood terms w.r.t $\S_j$ is zero everywhere except on the diagonal.
+Denoting this diagonal as $\llambda_{j}$ with elements $\lambda_{jn} = \nabla_{(\S_j)_{n,n}} \expectation_{q_{j(n)}} \log p(\y_n | \fn)$ we can rewrite the gradient as
+\begin{align}
+\nabla_{\S_j} \ELBO =  \mat{\Lambda}_{j} + \frac{1}{2} \S_j^{-1}  - \frac{1}{2} \K_j^{-1},
+\end{align}
+where $\mat{\Lambda}_{j}$ is the diagonal matrix with diagonal $\llambda_{j}$.
+Setting the above to zero to derive the optimum condition we get,
+\begin{align}
+\S_j = \big( \K_j^{-1} - 2\mat{\Lambda}_{j}) \big)^{-1}.
+\end{align}
+This proves that the full covariance of the posterior can be parametrized with  $\{\llambda_{j}\}$, thus requiring only $\calO(N)$ parameters for each latent function and hence $\calO(QN)$ in total.
+
+\section{Proof of theorem 3}
+First we review Rao-Blackwellization \cite{casella1996rao}, which is also known as partial averaging or conditional Monte Carlo.
+Suppose we want to estimate $V = \expectation [h(\X,\Y)]$ where $(\X, \Y)$ is a random variable with probability density $p(\x,\y)$ and $h(\X,\Y)$ is a random variable that is a function of $\X$ and $\Y$. 
+It is easy to see that 
+\begin{align}
+\expectation [h(\X,\Y)]
+=& \int p(\x, \y) h(\x, \y) \der \x \der \y \\
+=& \int p(\y) p(\x | \y) h(\x, \y) \der \x \der \y \\
+=& \expectation_{\y} [ \underbrace{\expectation_{\x | \y} [h(\X, \Y) | \Y]}_{\hat h (\Y)} ]
+\end{align}
+and, from the conditional variance formula,
+\begin{align}
+\text{var}[\hat h(\Y)] < \text{var} [h(\X,\Y)].
+\end{align}
+Therefore when $\hat h(\Y)$ is easy to compute, it can be used to estimate $V$ with a lower variance than the original estimator.
+When $p(\x,\y) = p(\x) p(\y)$, the $\hat h(\Y)$ is simplified to
+\begin{align}
+\hat h(\Y = \y) = \int p(\x) h(\x, \y) \der \x = \expectation_{\x} [h(\X, \Y) | \Y].
+\end{align}
+
+\newcommand{\fnn}{\f_{(-n)}}
+We apply Rao-Blackwellization to our problem with $\fn$ playing the role of the conditioning variable $\Y$ and $\fnn$ playing the role of $\X$, where $\fnn$ is $\f$ excluding $\fn$.
+
+First, we express the gradient of $\lamkn$ as an expectation by interchanging the integral and gradient operators giving
+\begin{align}
+\nabla_{\lamkn} \expectation_{q_k} \log p(\y | \f ) 
+=& \expectation_{q_k} \nabla_{\lamkn} \log q_k(\f | \llambda) \log p(\y | \f).
+\end{align}
+The Rao-Blackwellized estimator is thus
+\begin{align}
+\hat h(\fn) 
+=& \int q(\fnn) \nabla_{\lamkn} \log q_k(\f | \llambda) \log p(\y | \f) \der \fnn \\
+=& \int q(\fnn) \gradkn \log p(\y | \f) \der \fnn \\
+=& \bigg(\gradkn \bigg) \int q(\fnn) \log p(\y_n | \fn) \der \fnn \\
+&+ \bigg( \gradkn \bigg) \int q(\fnn) \log p(\y_{-n} | \fnn)  \der \fnn \\
+=& \bigg(\gradkn \bigg) \bigg(\log p(\y_n | \fn) + C \bigg),
+\end{align}
+where $C$ is a constant w.r.t $\fn$.
+This gives the Rao-Blackwellized gradient,
+\begin{align}
+\nabla_{\lamkn} \expectation_{q_k} \log p(\y | \f ) 
+=& \expectation_{q_{k(n)}} \hat h(\fn) \\
+=& \expectation_{q_{k(n)}} \gradkn \log p(\y_n | \fn),
+\end{align}
+which is exactly the gradient we obtained in \eqref{eq:gradient}. 
+To arrive at the last equality, we used the fact that $\expectation_q \nabla \log q = 0$ for any $q$.
+
+\paragraph{Remark}
+This Rao-Blackwellization is only applicable to the case with diagonal covariance as it satisfies the independent condition (i.e. $p(\x,\y) = p(\x) p(\y)$.
+
+%Since each mixture component is a diagonal Gaussian, it can be written as
+%\begin{align}
+%q_k(\f | \llambda_k) = \prod_{j=1}^Q q_{kj}(\f_j | \llambda_{kj}) = \prod_{n=1}^N q_{k(n)} (\fn | \llambda_{k(n)}),
+%\end{align}
+%where $\llambda_{kj}$ contains the variational parameters corresponding to $\f_j$ of the $k$th component and $\llambda_{k(n)}$ contains the variational parameters corresponding to $\fn$ of the component.
+
+\section[Derivation of the cross-entropy term]{Derivation of $\expectation_q [\log p(\f)]$}
+The negative cross-entropy can be computed as:
+\begin{align}
+\expectation_q [\log p(\f)] 
+=&  \sum_{k=1}^K \frac{1}{K} \int q_k(\f | \m_k, \S_k) \log p(\f) \der \f \\
+=& \sum_{k=1}^K \sum_{j=1}^Q \frac{1}{K} \int \Normal(\fj; \m_{kj}, \S_{kj}) \log \Normal(\fj; \vec{0}, \K_j) \der \fj \\
+=& \sum_{k=1}^K \sum_{j=1}^Q \frac{1}{K} \big[ \log \Normal(\m_{kj}; \vec{0}, \K_j) - \frac{1}{2} \trace (\K_j^{-1} \S_{kj}) \big] \\
+=& -\frac{1}{2K} \sum_{k=1}^K \sum_{j=1}^Q \big[ N \log 2\pi  + \log |\K_j| + \m_{kj}^T \K_j^{-1} \m_{kj} + \trace (\K_j^{-1} \S_{kj}) \big]
+\end{align}
+
+\section[Gradients of the $\KL$ divergence w.r.t the variational parameters]{Gradients of $-\KL[q(\f | \llambda) || p(\f)]$ w.r.t the variational parameters}
+\newcommand{\mk}{\m_k}
+\newcommand{\Sk}{\S_k}
+Let $\Lent = \expectation_q [ - \log q(\f | \llambda)]$ and $\Lcross = \expectation_q  [\log p(\f)]$ then the gradients are given as following.
+\begin{align}
+% dLcross/dmk
+\nabla_{\mk} \Lcross =& - \frac{1}{K} \K^{-1} \mk \\ \nonumber
+% dLent/dmk
+\nabla_{\mk} \Lent =&  \frac{1}{K} \sum_{l=1}^K \frac{1}{K} (\frac{\Normal_{kl}}{z_k} + \frac{\Normal_{kl}}{z_l}) (\S_k + \S_l)^{-1} (\m_k - \m_l) \\ 
+% dLcross/dsk
+\label{eq:crossgradient}
+\nabla_{\Sk} \Lcross =& - \frac{1}{2K} \K^{-1} \\ \noindent
+% dLent /dsk
+\label{eq:entgradient}
+\nabla_{\Sk} \Lent =& \frac{1}{2K} \sum_{l=1}^K \frac{1}{K} (\frac{\Normal_{kl}}{z_k} + \frac{\Normal_{kl}}{z_l}) \bigg[ (\S_k + \S_l)^{-1} 
+ - (\S_k + \S_l)^{-1} (\m_k - \m_l) (\m_k - \m_l)^T (\S_k + \S_l)^{-1}) \bigg]
+ % dLcross / dwk
+%\nabla_{\frac{1}{K}} \Lcross =& - \frac{1}{2} \big( QN \log 2\pi  + \log |\K| + %\m_{k}^T \K^{-1} \m_{k} + \trace (\K^{-1} \S_{k}) \big) 
+%% dLent / dwk
+%\nabla_{\frac{1}{K}} \Lent =& \log z_k + \sum_{l=1}^K \frac{1}{K} %\frac{\Normal_{kl}}{z_l},
+\end{align}
+where $\Normal_{kl} = \Normal(\m_k; \m_l, \S_k + \S_l)$ and $z_k = \sum_{l=1}^K \frac{1}{K} \Normal_{kl}$.
+Since the covariance matrices $\S_k$ have block structure, care should be taken in implementation such that its inversion can be done by inverting its blocks, i.e. the covariance corresponding to individual latent functions.
+
+\section{Predictive mean and variance by a mixture posterior}
+Using the mixture of Gaussians posterior, the predictive distribution for the new test points $\vxstar$ can be approximated by
+\begin{align}
+p(\Ystar | \vxstar) 
+&= \frac{1}{K} \sum_{k=1}^K \underbrace{\int p(\Ystar | \vfstar) \int p(\vfstar | \f) q_k(\f) \der \f \der \vfstar}_{p_k(\Ystar | \vxstar)},
+\end{align}
+where $p_k(\Ystar | \vxstar)$ is the predictive distribution by component $k$. 
+If this distribution has predictive mean $\mu_{k*}$ and variance $\sigma^2_{k*}$, the mean and variance of $p(\Ystar | \vxstar)$ are given by:
+\begin{align}
+\expectation [\Ystar] &= \frac{1}{K} \sum_{k=1}^K \mu_{k*}, \\
+\text{Var} [\Ystar] &= \frac{1}{K} \sum_{k=1}^K \sigma_{k*}^2 + \frac{1}{K} \sum_{k=1}^K \mu_{k*}^2 - \expectation [\Ystar]^2,
+\end{align}
+In other words, the predictive mean is the average of the prediction by each posterior component and the variance is the average of the variances by the components plus the variance of the mean prediction.
+
+\bibliography{references}
+\bibliographystyle{unsrt}
+
+\end{document}

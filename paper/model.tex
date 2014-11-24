@@ -1,0 +1,47 @@
+\section{A family of GP models \label{sec:gpfamily}}
+%motivation:
+% 1) eistein : keep thing simple but not simpler
+% 2) vapnik : when solving a given problem, try to avoid solving a more general problem as an intermediate step
+We consider supervised learning problems with a dataset  of
+$N$ training inputs $\x = \{\x_n\}_{n=1}^N$ and their corresponding 
+targets $\y = \{\y_n\}_{n=1}^N$.
+The mapping from  inputs to outputs is established via $Q$ underlying latent functions, and our 
+objective is to reason about  these latent functions  from the observed data.
+%
+We specify a class of GP models for which the priors and the likelihoods have the following structure:
+\begin{align}
+\label{eq:prior}
+p(\f | \vtheta{0}) &= \prod_{j=1}^Q p(\fj | \vtheta{0}) = \prod_{j=1}^Q \Normal(\fj; \vec{0}, \K_j) \text{,} \\
+\label{eq:likelihood}
+p(\y | \f, \vtheta{1}) &= \prod_{n=1}^N p(\y_n | \fn, \vtheta{1}) \text{,}
+\end{align}
+where $\f$ is the set of all latent function values; $\fj = \{f_j(\x_n)\}_{n=1}^N$ denotes the values of the latent function $j$; $\fn = \{f_j(\x_n)\}_{j=1}^Q$ is the set of latent function values  which $\y_n$ depends upon; $\K_j$ is the covariance matrix evaluated at every pair of inputs 
+induced by the covariance function $k_j(\cdot,\cdot)$; and $\vtheta{0}$ and $\vtheta{1}$ are covariance 
+hyperparameters and likelihood parameters, respectively.
+
+% in words
+In other words, the class of models specified by Equations \eqref{eq:prior} and \eqref{eq:likelihood}
+satisfy the following two criteria: 
+(a) factorization of the  prior  over the latent functions  
+and (b) factorization of the conditional likelihood  over the observations.
+Existing GP models including GP regression \cite{rasmussen-williams-book}, binary classification \cite{nickisch2008approximations,williams1998bayesian}, warped GPs \cite{snelson2003warped}, log Gaussian Cox processes \cite{moller1998log}, multi-class classification \cite{williams1998bayesian}, and multi-output regression \cite{wilson-et-al-icml-12} all 
+belong to this family of models.
+
+%\subsection{On the Choice of the Variational Families}
+%Variational inference requires find the best approximation to the intractable posterior, typically from a restricted but tractable family of distributions. 
+%For automated inference, ideally we would want to have maximum freedom in choosing the approximating families.
+%Note though, that in practice, the dominant choice for GP-based models is the Gaussian distribution which is known as the variational Gaussian approximation (cite Opper).
+%This is because the latent variables are function values and thus expected to be correlated.
+%However, using fully correlated posterior is likely to cause problem for the stochastic optimization procedure that we are going to use.
+%In particular, many samples from the approximate posteriors will be required to estimate the noisy gradients using Monte Carlo approximation.
+%Also it is not clear how to reduce the variance in this setting except for the use of control variates such that stochastic optimization can be practical.
+%
+%Based on this observation, we propose to use the variational posterior which is a mixture of diagonal Gaussians.
+%There are several advantages of this approach.
+%Firstly, the mixture distribution can approximate fairly complex distributions just by increasing the number of mixture components.
+%The effectiveness of this variational family has also been demonstrated in \citet{nguyen2013efficient} for a sophisticated GP model namely the GPRNs.
+%Secondly, the same lower bound of the entropy of the posterior used in \citet{nguyen2013efficient} can replace its Monte Carlo approximation in the general variational inference framework, effectively reducing stochasticity.
+%Thirdly, the expectation wrt the mixture distributions decomposes as the sum of expectation wrt each mixture component.
+%As each component is diagonal, it fully factorizes, thus making the application of Rao-Blackwellization to reduce variance possible.
+%This approach can perhaps be viewed as trade-off between generality and practicality: we restrict the choice of the posteriors to obtain a more practical solution.
+%Note though that in the GP world, this restriction is not very limiting as most GP models would assume a Gaussian posterior anyway.

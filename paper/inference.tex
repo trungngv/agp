@@ -1,0 +1,256 @@
+\section{Automated variational inference for GP models}
+This section describes our automated inference framework 
+for posterior inference of the latent functions 
+for the given family of models.
+%
+Apart from Equations \eqref{eq:prior} and \eqref{eq:likelihood},
+we only require access to the likelihood function 
+in a black-box manner, i.e.~specific knowledge of 
+its shape or its gradient is not needed. 
+Posterior inference for general (non-Gaussian) likelihoods is analytically 
+intractable. 
+
+We build our posterior approximation framework upon variational inference principles.  
+This entails positing a tractable family of distributions and finding the member of the family that is 
+``closest'' to the true posterior in terms of their $\KL$ divergence.
+Herein we choose the family of mixture of Gaussians (MoG) with $K$  components, defined as 
+\begin{align}
+%q(\f | \llambda) = \sum_{k=1}^K \frac{1}{K} \underbrace{\prod_{j=1}^Q \Normal(\fj; \m_{kj}, \S_{kj})}_{q_k(\f | \m_k, \S_k )} \text{,} \quad \llambda = \{ \m_{kj}, \S_{kj} \} \text{,} \\
+q(\f | \llambda) = \frac{1}{K}  \sum_{k=1}^K q_k(\f | \m_k, \S_k ) =  \frac{1}{K}  \sum_{k=1}^K \prod_{j=1}^Q 
+\Normal(\fj; \m_{kj}, \S_{kj}) \text{,} 
+\quad \llambda = \{ \m_{kj}, \S_{kj} \} \text{,}
+\end{align}
+where $q_k(\f | \m_k, \S_k)$ is the component $k$ with variational parameters 
+$\m_k =  \{ \m_{kj}\}_{j=1}^{Q}$ and $\S_k = \{\S_{kj} \}_{j=1}^{Q}$. 
+Less general MoG with \emph{isotropic} covariances have been used with variational inference in \cite{nguyen2013efficient,gershman-et-al-icml-12}.
+Note that within each component, the posteriors over the latent functions are independent.
+
+Minimizing the divergence $\KL[q(\f | \llambda) || p(\f|\y)]$ is equivalent to maximizing the evidence lower bound (ELBO) given by:
+\begin{align}
+\label{eq:elbo}
+\log p(\y) 
+\geq & 
+\underbrace{\expectation_q [ - \log q(\f | \llambda)] + 
+\expectation_q  [\log p(\f)]}_{-\KL[q(\f | \llambda) || p(\f)]} + 
+\frac{1}{K} \sum_{k=1}^K \expectation_{q_k}  [\log p(\y | \f)]
+\define \calL \text{.}
+\end{align}
+Observe that the $\KL$ term  in Equation \eqref{eq:elbo} does not depend on the likelihood.
+The remaining term, called the \textit{expected log likelihood} (ELL), is the only contribution of the likelihood to the ELBO. 
+We can thus address the technical difficulties regarding each component and their 
+derivatives  separately using different approaches.
+In particular, we can obtain a lower bound of the first term (KL) and 
+approximate the second term (ELL) via sampling.
+Due to the limited space, we only show the main results and refer the reader to 
+ the supplementary material for derivation details.
+%
+\subsection[A lower bound of the KL divergence term]{A lower bound of $-\KL[q(\f | \boldsymbol{\lambda}) || p(\f)]$ \label{sec:klbound}}
+The first component of the KL divergence term is the entropy of a Gaussian mixture which is not analytically tractable.
+However, a lower bound of this entropy can be obtained using Jensen's inequality (see e.g. \cite{ihuber-et-al-2008}) giving:
+\begin{align}
+\label{eq:Lent}
+\expectation_q [ - \log q(\f | \llambda)] 
+\ge - \sum_{k=1}^K \frac{1}{K} \log \sum_{l=1}^K \frac{1}{K} \Normal( \m_k; \m_l , \S_k + \S_l) \text{.}
+\end{align}
+%where equality (up to a constant) occurs when $K = 1$. 
+The second component of the KL term is a negative cross-entropy between a Gaussian mixture and 
+a Gaussian, which can be computed analytically giving:
+\begin{align}
+\expectation_q  [\log p(\f)] 
+=&  -\frac{1}{2K} \sum_{k=1}^K \sum_{j=1}^Q \big[ N \log 2\pi  + \log |\K_j| + \m_{kj}^T \K_j^{-1} \m_{kj} + \trace (\K_j^{-1} \S_{kj}) \big].
+\label{eq:Lcross}
+\end{align}
+The gradients of the two terms in Equations \eqref{eq:Lent} and \eqref{eq:Lcross} wrt  the variational parameters can be computed analytically and 
+are given in the supplementary material.
+%
+\subsection{An approximation to the expected log likelihood (ELL) \label{sec:ellapprox}}
+\newcommand{\lamk}{\llambda_{k}}
+\newcommand{\lamkn}{\llambda_{k(n)}}
+\newcommand{\lamki}{\llambda_{k(i)}}
+\newcommand{\efi}{\f_{(i)}}
+\newcommand{\gradkn}{\nabla_{\lamkn} \log q_{k(n)} (\fn | \lamkn)}
+It is clear from Equation \eqref{eq:elbo} that the ELL can be obtained via the ELLs of the 
+individual mixture components $\expectation_{q_k}  [\log p(\y | \f)]$.
+Due to the factorial assumption of $p(\y | \f)$, the expectation becomes:
+\begin{align}
+\expectation_{q_k} [\log p(\y | \f)] = \sum_{n=1}^N \expectation_{q_{k(n)}} [\log p(\y_n | \fn)],
+\label{eq:ell}
+\end{align}
+where $q_{k(n)} = q_{k(n)}(\fn | \lamkn)$ is the marginal posterior with variational parameters $\lamkn$ that correspond to $\fn$.
+The gradients of these individual ELL terms wrt the variational parameters $\lamkn$ are given by:
+\begin{align}
+\nabla_{\lamkn}  \expectation_{q_{k(n)}} [\log p(\y_n | \fn)]
+= & \expectation_{q_{k(n)}} \gradkn \log p(\y_n | \fn).
+\label{eq:ellgradients}
+\end{align}
+%
+Using Equations \eqref{eq:ell} and \eqref{eq:ellgradients} we establish the following theorem regarding the 
+computation of the ELL and its gradients.
+\newtheorem{theorem1}{Theorem}
+\begin{theorem1}
+The expected log likelihood and its gradients can be approximated using samples from univariate Gaussian distributions.
+\end{theorem1}
+%This remark implies that the \textit{sampling cost} to estimate the gradients is the same regardless of the structures of the covariance matrices.
+%However, the cost of computing the gradients when the covariance matrix is diagonal is only linear compared to cubic in the full covariance case due to matrix inversion. 
+%
+The proof is in Section 1 of the supplementary material. 
+% opper
+A less general result, for the case of one latent function and the variational Gaussian posterior, was obtained in \cite{opper-arch-nc-2009} using a different derivation. 
+Note that when $Q > 1$, $q_{k(n)}$ is not a univariate marginal. Nevertheless, it has a diagonal covariance matrix due to the factorization of the latent posteriors so the theorem still holds.
+% note on generality of this result so long as likelihood is factorized?
+% and also comparison to BBVI which requires factorized posteriors?
+
+\subsection{Learning of the variational parameters and other model parameters}
+\newcommand{\mkn}{\m_{k(n)}}
+\newcommand{\Skn}{\S_{k(n)}}
+\newcommand{\skn}{\s_{k(n)}}
+In order to learn the parameters of the model we use gradient-based optimization of the ELBO.
+For this we require the gradients of the ELBO wrt all model parameters.
+\paragraph{Variational parameters.}
+The noisy gradients 
+of the ELBO w.r.t.~the variational means $\mkn$ and variances $\Skn$ 
+corresponding to  data point $n$ are given by:
+\begin{align}
+% gradient wrt mean
+\hat \nabla&_{\mkn}  \calL \approx \nabla_{\mkn} \Lent 
++ \nabla_{\mkn} \Lcross 
++ \frac{1}{KS}  \skn^{-1} \circ \sum_{i=1}^S  (\fn^i - \mkn) \log p(\y_n | \fn^i) \text{,} \\
+\nonumber
+% gradient wrt variance
+\hat \nabla&_{\Skn} \calL \approx \nabla_{\Skn} \Lent 
++ \nabla_{\Skn} \Lcross \\
+&+ \frac{1}{2KS}  \mathrm{dg}  \sum_{i=1}^S \bigg(\skn^{-1} \circ \skn^{-1} \circ (\fn^i - \mkn) \circ (\fn^i - \mkn) - \skn^{-1} \bigg) \log p(\y_n | \fn^i) 
+\end{align}
+where $\circ$ is the entrywise Hadamard product;
+ $\{\fn^i\}_{i=1}^{S}$ are samples from $q_{k(n)} (\fn | \mkn, \skn)$; 
+$\skn$ is the diagonal of $\Skn$ and $\skn^{-1}$ is the element-wise inverse of $\skn$; $\mathrm{dg}$ turns a vector to a diagonal matrix;  and
+$\Lent = \expectation_q [ - \log q(\f | \llambda)]$ 
+and $\Lcross = \expectation_q  [\log p(\f)]$ are given by Equations 
+\eqref{eq:Lent} and 
+\eqref{eq:Lcross}.
+The control variates technique described in \cite{ranganath2014black} is also 
+used to further reduce the variance of these estimators.
+%
+%To see this, consider a family of structured meanfield for 
+% $q(\f | \llambda)$ such as $q(\f | \llambda) = \prod_{j=1}^Q q(\f_j | \llambda_j)$.
+% Rao-Blackwellization amounts to estimating each gradient component $\nabla_{\llambda_j} \calL$ with samples from  $q(\f_j | \llambda_j)$.
+%The typical values of $Q$ can be small (e.g. multi-output problems with a few outputs), or $Q = 1$ for the standard GP regression and classification models.
+%The effects of Rao-Blackwellization can as such be limited ($Q$ small) or non-existent ($Q = 1$).
+%This can be remedied by assuming a more factorized form for each component $q(\f_j | \llambda_j)$ but this is not a common practice in GPs due to the correlations among the latent values.
+%\textbf{This prompts the search for other variance reduction techniques for the stochastic optimization to be more effective / practical.} 
+%
+\paragraph{Covariance hyperparameters.}
+%Hyperparameters learning is critical for GP models to work well across different problems.
+The ELBO  in Equation \eqref{eq:elbo} reveals a remarkable property: the hyperparameters depend only on
+the negative cross-entropy term $\expectation_q  [\log p(\f)]$ whose \textit{exact} expression was derived in 
+Equation \eqref{eq:Lcross}. 
+This has a  significant practical implication: despite using black-box inference,  the hyperparameters are optimized wrt the true evidence lower bound (given fixed variational parameters). 
+This is an additional and crucial advantage of our automated inference method 
+over other generic inference techniques  \cite{ranganath2014black} 
+that seem incapable of hyperparameter learning, in part because 
+there are not yet techniques for reducing the variance of the gradient estimators.
+The gradient of the ELBO wrt any hyperparameter  $\theta$ of the $j$-th covariance function is given by: 
+\newcommand{\Kjinv}{\K_j^{-1}}
+\begin{align}
+\nabla_{\theta} \calL = -\frac{1}{2K} \sum_{k=1}^K \trace \big(\Kjinv \nabla_{\theta} \K_j -  \Kjinv \nabla_{\theta} \K_j \Kjinv (\m_{kj} \m_{kj}^T + \S_j) \big).
+\end{align}
+
+%\begin{align}
+%\gtheta{1} \calL 
+%=& \gtheta{1} \int q(\f | \llambda) \log p(\y, \f | \vtheta{})  \der \f \\
+%=& \int q(\f | \llambda) \gtheta{1} \log p(\f | \vtheta{1})  \der \f \\
+%=& \sum_{k=1}^K \frac{1}{K} \expectation_{q_k} \big[ \gtheta{1} \log p(\f | \vtheta{1}) \big] \\
+%\approx& \sum_{k=1}^K \frac{1}{K} \frac{1}{S} \sum_{s=1}^S \gtheta{1} \log p(\f^{k,s} | \vtheta{1}).
+%\end{align}
+%
+%\noindent Note that this noisy gradient still satisfies the generality condition in that the derivatives of $\log p(\f | \vtheta{1})$ wrt $\vtheta{1}$ can be computed and re-used in different models.
+%For GP models, it is even simpler as typically $p(\fs | \vtheta{1})$ has the factorized form as in \eqref{eq:factorizedprior} which only requires the derivative of the log normal density wrt covariance hyperparameters.
+
+\paragraph{Likelihood parameters}
+The noisy gradients w.r.t.~the likelihood parameters can also be estimated via samples from univariate marginals:
+\newcommand{\gtheta}[1]{\nabla_{\vtheta{#1}}}
+\begin{align}
+\gtheta{1} \calL 
+%=& \expectation_{q_k} \big[ \gtheta{1} \log p(\y | \f) \big] 
+\approx \frac{1}{KS} \sum_{k=1}^K \sum_{n=1}^N  \sum_{i=1}^S \gtheta{1} \log p(\y_n | \f^{k,i}_{(n)},  \vtheta{1}), \text{ where } \f^{k,i}_{(n)} \sim q_{k(n)} (\fn | \mkn, \skn).
+\end{align}
+
+\subsection{Practical variational distributions \label{sec:practicaldist}}
+The gradients  from the previous section may be used for  automated variational inference for GP models.
+However, the mixture of Gaussians (MoG) requires  $\calO(N^2)$ variational parameters for each 
+covariance matrix, i.e.~we need to  estimate a total of $\calO(QKN^2)$ parameters.
+This causes difficulties for learning when these  parameters are optimized simultaneously.
+This section introduces two special members of the MoG family 
+that  improve the practical tractability of our   inference framework.
+
+\paragraph{Full Gaussian posterior.} This instance is the mixture with only 1 component and is thus a Gaussian distribution.
+Its covariance matrix has block diagonal structure, where each block is a full covariance corresponding to that of a 
+single latent function posterior.
+We thus refer to it as the full Gaussian posterior. 
+%
+As stated in the following theorem,  full Gaussian posteriors can still be estimated efficiently in our variational framework.
+\newtheorem{theorem2}[theorem1]{Theorem}
+\begin{theorem2}
+Only $\calO(QN)$ variational parameters are required to parametrize the latent posteriors with full covariance structure.
+\end{theorem2}
+%
+The proof is given Section 2 of  the supplementary material.
+This result has  been stated previously (see e.g. \cite{nickisch2008approximations,nguyen2013efficient,opper-arch-nc-2009}) 
+but for specific models that belong to the class of GP models considered here. 
+%
+\paragraph{Mixture of diagonal Gaussians posterior.} Our second practical variational posterior 
+is a Gaussian mixture with diagonal covariances, yielding two immediate benefits.
+Firstly, only $\calO(QN)$ parameters are required for each mixture component.
+Secondly, computation is more efficient as inverting a diagonal covariance can be done in linear time.
+Furthermore, as a result of the following  theorem,
+optimization will typically converge faster when using a mixture of diagonal Gaussians.
+\newtheorem{theorem3}[theorem1]{Theorem}
+\begin{theorem3}
+The estimator of the gradients wrt the variational parameters using the mixture of 
+diagonal Gaussians has a lower variance than the full Gaussian posterior's.
+\end{theorem3}
+%
+The proof is in Section 3 of the supplementary material and is based on the Rao-Blackwellization technique \cite{casella1996rao}. 
+We note that this result is different to that in \cite{ranganath2014black}.
+In particular, our variational distribution is a mixture, thus multi-modal.
+The theorem is only made possible due to the analytical tractability of the $\KL$ term in the ELBO.
+
+Given the noisy gradients, we use off-the-shelf, gradient-based optimizers, such as conjugate gradient, to learn the model parameters.
+Note that stochastic optimization may also be used, but it may require significant time 
+and effort in tuning the learning rates.
+%gradient-based methods can be used to optimize the parameters of the models.
+%This is  verified empirically through our extensive evaluation  in section  \ref{sec:expts}.
+%This avoids the use of stochastic optimization as in \cite{ranganath2014black}, which may require significant time 
+%and effort in tuning the learning rates. % for different problems.
+
+%Before diving into the technical details, let us study the noisy gradients of the expected log likelihood using straightforward application of the blackbox variational inference frameowork: 
+%\newcommand{\fs}{\f^{s}}
+%\begin{align}
+%\nabla_{\llambda} \expectation_q  \log p(\y | \f)
+%=& \expectation_q \big[ \log p(\y|  \f )  \nabla_{\llambda} \log q(\f | \llambda) \big] \\
+%\approx& \frac{1}{S} \sum_{s=1}^S \log p(\y, \fs | \vtheta{}) \nabla_{\llambda} \log q(\fs | \llambda),
+%\end{align}
+%where the second equation is the Monte Carlo approximation of the gradient using $S$ samples $\fs \sim q(\f | \llambda)$.
+%Note here that if $q(\f | \llambda)$ is a full Gaussian distribution, many samples are needed to estimate the gradient.
+%Our analysis suggests that the variance of this estimator is too high to be practical. 
+%This motivates the use of the variational mixture of Gaussian posterior, which we will now show how it allows the application of Rao-Blackwellization to further reduce the variance.
+
+\subsection{Prediction}
+Given the MoG posterior, the predictive distribution for new test points $\vxstar$ is given by:
+\begin{align}
+p(\Ystar | \vxstar) 
+&= \frac{1}{K} \sum_{k=1}^K \int p(\Ystar | \vfstar) \int p(\vfstar | \f) q_k(\f) \der \f \der \vfstar. 
+%&=\frac{1}{K} \sum_{k=1}^K p_k(\Ystar | \vxstar)
+\end{align}
+The inner integral is the predictive distribution of the latent values $\fstar$ and it is  a Gaussian since both $q_k(\f)$ and $p(\vfstar | \f)$ are Gaussian.
+The probability of the test points taking values $\vystar$ (e.g.~in classification) can thus be readily estimated via Monte Carlo sampling.
+The predictive means and variances of a MoG can be obtained from that of the individual mixture components as described in Section 6 of the supplementary material.
+%In other  models, the predictive mean and variance may be required. These can be obtained using the means and variances of 
+%the individual mixture components as described in Section 6 of  the supplementary material. 
+
+
+
+
+
+
+

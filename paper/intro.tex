@@ -1,0 +1,122 @@
+\section{Introduction}
+%Importance of GP models
+Gaussian processes (GPs, \cite{rasmussen-williams-book}) are a popular 
+choice in practical Bayesian non-parametric modeling. % especially in supervised learning scenarios. 
+%
+The most straightforward application of GPs is the standard regression model with Gaussian likelihood,
+for which the posterior can be computed in closed form. 
+%Challenges: inference for non-Gaussian likelihood.
+However, analytical tractability is no longer possible when having  non-Gaussian likelihoods, and inference must be carried out via  approximate methods, among which Markov chain Monte Carlo (MCMC, see e.g.~\cite{neal1993probabilistic}) 
+and variational inference \cite{jordan1998introduction} are arguably the two techniques most widely used.
+
+% MCMC and its limitation
+MCMC algorithms provide a flexible framework for sampling from complex posterior distributions of probabilistic models.
+% and, in principle, 
+%they can be applied to any probabilistic inference problem. 
+However, their generality comes at the expense 
+of very high computational cost as well as cumbersome convergence analysis. 
+Furthermore, methods such as Gibbs sampling may perform poorly when there are strong dependencies among the variables of interest. 
+Other algorithms such as the elliptical slice sampling (ESS) developed in  \cite{murray2009elliptical}  
+are more effective at drawing samples from 
+strongly correlated Gaussians. Nevertheless, while improving upon generic MCMC methods, the sampling cost of 
+ESS remains a major challenge for practical usages.
+
+% variational inference
+Alternative to MCMC is the deterministic approximation approach via variational inference, 
+which has been used in numerous applications  with some empirical success ( see e.g. \cite{khan2012stick,nickisch2008approximations, nguyen2013efficient,
+khan2012fast, lazaro2012bayesian, girolami2006variational, lazaro2011variational}).
+%todo: more references?
+The main insight from variational methods is that  optimizing is generally easier than integrating. 
+Indeed, they approximate a posterior by optimizing a lower bound of the 
+marginal likelihood,  the so-called evidence lower bound (ELBO). 
+% Variational inference is good but ...
+While variational inference can be considerably faster than MCMC, it lacks MCMC's broader applicability as it requires derivations of the ELBO and its gradients on a model-by-model basis.
+%Although, typically, variational algorithms are considerably faster than MCMC methods, they
+%usually require the derivations of the ELBO and its gradients on a model-by-model basis, 
+%hence lacking the wider applicability of MCMC methods.
+
+% This paper 
+This paper develops an \emph{automated variational inference} technique for  GP models  
+that not only reduces the overhead  of the tedious mathematical 
+derivations inherent to variational methods but also allows their application to a wide range of problems.
+% model speacifiction and how is black box possible 
+In particular, we consider Gaussian process models that satisfy the following properties:
+(i)  factorization across latent functions  and 
+(ii) factorization across observations.
+The former assumes that, when there is more than one latent function, they are generated from  independent GPs. 
+The latter assumes that, given  the latent functions,  the observations are  conditionally independent. 
+Existing GP models, such as regression \cite{rasmussen-williams-book}, 
+binary and multi-class classification \cite{nickisch2008approximations,williams1998bayesian}, 
+warped GPs \cite{snelson2003warped}, log Gaussian Cox process \cite{moller1998log}, 
+and multi-output regression \cite{wilson-et-al-icml-12}, all fall into  this class of models.
+ We note, however, that our approach goes beyond standard  settings for 
+ which elaborate learning machinery has been developed, 
+ as we only require access to the likelihood function in a black-box manner.
+
+Our automated deterministic inference method uses a mixture of Gaussians as the approximating 
+posterior distribution and exploits the decomposition of the ELBO into a
+  $\KL$ divergence term         %(between the prior and the approximate posterior) 
+  and  an expected log likelihood term. 
+% lower bound to KL and univariate sampling
+In particular, we derive an analytical lower bound for the KL term;
+and we show 
+that the expected log likelihood term and its gradients can be computed efficiently 
+by sampling from univariate Gaussian distributions, without explicitly requiring gradients of the likelihood. 
+% hyperparameters
+Furthermore, we optimize the GP hyperparameters within the same variational framework by using their analytical gradients, 
+irrespective of the specifics of the likelihood models. 
+
+% Good for automatic inference
+Additionally, we exploit the efficient parametrization of the covariance matrices in the models,  
+which is linear in the number of observations, along with 
+variance-reduction techniques in order to provide an automated inference framework 
+that is useful in practice. 
+%
+We verify the effectiveness of our method with extensive experiments on  5 different 
+GP settings using 6 benchmark datasets. We show that our 
+approach performs as well as exact  GPs or hard-coded deterministic inference 
+implementations, and  that it 
+can be up to several orders of  magnitude faster than  state-of-the-art 
+MCMC approaches.
+%
+% (to clarify /strengthen contribution / novelty): 
+%
+%\par
+\vspace{-0.2cm}
+\subsubsection*{Related work}
+%\par
+%
+Black box variational inference (BBVI, \cite{ranganath2014black}) has recently been  developed for general latent variable models.
+Due to this generality, it under-utilizes the rich amount of information available in GP models that we previously discussed.
+For example, BBVI approximates the $\KL$ term of the ELBO, but this is  computed analytically in our method. 
+%Additionally, for practicality reason, BBVI imposes the variational distribution to fully factorize over the latent variables, while we make no such restriction.
+A clear disadvantage of BBVI is that it does not provide an analytical or practical way of learning the covariance hyperparameters of GPs -- in fact, these are set to fixed values.
+In principle, these values can be learned in BBVI using stochastic optimization, but experimentally, we have found this to be problematic, ineffectual, and time-consuming.
+In contrast, our method optimizes the hyperparameters using their exact gradients. % and as such contribute to its empirical success.
+%philosophy
+%The lesson here is important: we should make the class of 
+%models general (e.g. here, enough to encompass most GP models) but can still make 
+%use of the additional information common to the class when performing inference.
+
+An approach more closely related to ours is in \cite{opper-arch-nc-2009},  
+which investigates variational inference for GP models with one latent function and factorial likelihood.
+Their main result is an efficient parametrization when using a standard  variational Gaussian distribution. 
+Our method is more general in that it allows multiple latent functions, 
+ hence being applicable to settings  such as multi-class classification and multi-output regression.
+Furthermore, our variational distribution is a mixture of Gaussians, with 
+the full Gaussian distribution being a particular case.
+%verifed
+Another recent approach to deterministic approximate inference  is the Integrated 
+Nested Laplace Approximation (INLA, \cite{rue2009approximate}).
+INLA uses numerical integration to approximate the marginal likelihood, %but it is limited to only a few hyperparameters, 
+which makes it unsuitable for GP models that  contain a large number of hyperparameters. 
+
+% EVB Commented this out: we can use it in the rebuttal :-)
+%Finally, the work in \cite{opper-arch-nc-2009} lacks practical considerations, such as hyperparameters 
+%optimization and variance reduction, as well as empirical evidence
+ %to be considered a black-box method.
+  
+%* khan : a bound for each likelihood
+
+
+

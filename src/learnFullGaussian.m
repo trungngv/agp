@@ -104,6 +104,8 @@ function [fval,grad] = elbo(theta,m,conf,K,LKchol,s_rows,e_rows,updateS)
   m.pars.L = theta(numel(m.pars.M)+1:end);
   dM = zeros(size(m.pars.M));
   dL = zeros(size(m.pars.L));
+  fvalEnt = 0;
+  fvalNCE = 0;
   % entropy + neg cross entropy part
   for j=1:Q
     % new value of L leads to new value for S
@@ -113,8 +115,8 @@ function [fval,grad] = elbo(theta,m,conf,K,LKchol,s_rows,e_rows,updateS)
     LSchol = jit_chol(m.pars.S{j})';
     Kinvm = solve_chol(LKchol{j},m.pars.M(s_rows(j):e_rows(j))); % K^{-1}m
     KinvLj = solve_chol(LKchol{j},LSchol);  % K^{-1} Lj
-    fvalEnt = sum(log(diag(LSchol))); % entropy
-    fvalNCE = 2*sum(log(diag(LKchol{j}))) + m.pars.M(s_rows(j):e_rows(j))'*Kinvm...
+    fvalEnt = fvalEnt + sum(log(diag(LSchol))); % entropy
+    fvalNCE = fvalNCE + 2*sum(log(diag(LKchol{j}))) + m.pars.M(s_rows(j):e_rows(j))'*Kinvm...
       + trAB(KinvLj,LSchol');
     if nargout > 1
       dM(s_rows(j):e_rows(j)) = -Kinvm;
